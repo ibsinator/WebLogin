@@ -58,7 +58,8 @@ be visible in Nagios:
 ```
 STATUS: Message | Time=1;2;3;4
 ```
-Return values:
+Return values
+
 | *Code* | *Message*                         |
 | :----: | :---------------------------------|
 | 0      | OK: Login successful              |
@@ -66,7 +67,8 @@ Return values:
 | 2      | CRITICAL: Login failed            |
 | 3      | UNKNOWN: Monitoring script failed |
 
-Time values:
+Time values
+
 | *Pos.* | *Timer Value*             |
 | :----: | ------------------------- |
 | 1      | Runtime for login attempt |
