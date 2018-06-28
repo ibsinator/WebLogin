@@ -180,7 +180,8 @@ If using a Linux distro with APT as packet manager, run the script
 | `-s`     | VERSION       | Latest      | Version of Selenium            |
 | `-v`     | True\|False   | False       | Use Python virtual environment |
 
-Return values:
+Return values
+
 |*Error* | *Description*                          |
 | :----: | -------------------------------------- |
 | 0      | Success!                               |
