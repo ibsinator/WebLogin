@@ -23,7 +23,7 @@ parser.add_argument('-c', '--config',
 parser.add_argument('-e', '--error_page', nargs=2)
 parser.add_argument('-i', '--insert_test')
 parser.add_argument('-l', '--login', nargs=2)
-parser.add_argument('-L', '--logout', nargs=2)
+parser.add_argument('-v', '--verify', nargs=2)
 parser.add_argument('-m', '--timer_max', type=int, default=35)
 parser.add_argument('-n', '--timer_warning', type=int, default=7)
 parser.add_argument('-o', '--timer_critical', type=int, default=15)
@@ -43,7 +43,7 @@ config = vars(args)['config']
 error_page = vars(args)['error_page']
 insert_test = vars(args)['insert_test']
 login_button = vars(args)['login']
-logout_button = vars(args)['logout']
+verify = vars(args)['verify']
 timer_max = vars(args)['timer_max']
 timer_warning = vars(args)['timer_warning']
 timer_critical = vars(args)['timer_critical']
@@ -55,7 +55,7 @@ id_user = vars(args)['id_user']
 id_pass = vars(args)['id_pass']
 
 # Assign parameters from a config file to variables.
-# Username and password not possible.
+# !! Username and password not possible.
 if args.config:
     args = parser.parse_args(shlex.split(args.config.read()))
     if not url:
@@ -68,8 +68,8 @@ if args.config:
         insert_test = vars(args)['insert_test']
     if not login_button:
         login_button = vars(args)['login']
-    if not logout_button:
-        logout_button = vars(args)['logout']
+    if not verify:
+        verify = vars(args)['verify']
     if not login_sso:
         login_sso = vars(args)['login_sso']
     if not timeout:
@@ -78,7 +78,6 @@ if args.config:
         id_user = vars(args)['id_user']
     if not id_pass:
         id_pass = vars(args)['id_pass']
-    
 
 # Split parameters where more than one choice is expected.
 if error_page:
@@ -87,35 +86,46 @@ if error_page:
 if login_button:
     login_button = (vars(args)['login'])[0]
     login_button_type = (vars(args)['login'])[1]
-if logout_button:
-    logout_button = (vars(args)['logout'])[0]
-    logout_button_type = (vars(args)['logout'])[1]
+if verify:
+    verify = (vars(args)['verify'])[0]
+    verify_type = (vars(args)['verify'])[1]
 if login_sso:
     login_sso = (vars(args)['login_sso'])[0]
     login_sso_type = (vars(args)['login_sso'])[1]
 
 # Make Firefox use headless mode and geckodriver.
 options = Options()
-#options.add_argument('-headless')
 driver = Firefox(executable_path=\
          'geckodriver',\
          firefox_options=options)
 
-# Set timer for login attempt.
-start_timer = time.time()
+
+def timer():
+    # Set timer for login attempt.
+    try:
+        timestamp = open('timestamp.txt', 'w+')
+        start_timer = str(time.time())
+        timestamp.write(start_timer)
+    except:
+        mess = 'CRITICAL: Unable to set timer'
+        exit_status(mess, 1)
 
 
 def exit_status(message, value):
-    """Exit script."""
-    # Calculate total time for login attempt.
-    end_timer = time.time()
-    timer = round((end_timer - start_timer))
-    # Quit Firefox.
-    driver.quit()
-    # Print message and time
-    print(message + ' | Time=%d;%d;%d;;' % \
-                    (timer, timer_warning, timer_critical))
-    sys.exit(value)
+    """Calculate timer, write to logs and exit script."""
+    # Calculate timer for login attempt.
+    try:
+        timestamp = open('timestamp.txt', 'r+')
+        timestamp_float = float(timestamp.read())
+        total = round((time.time() - timestamp_float))
+        timestamp.close()
+        message_output=(message + ' | Time=%d;%d;%d' % \
+                       (total, timer_warning, timer_critical))
+        print(message_output)
+        driver.quit()
+    except:
+        print('Unable to read timer')
+        driver.quit()
 
 
 def begin_login():
@@ -205,14 +215,14 @@ def page_login_verify():
     """Verify login by identifying logout button"""
     mess = ''
     try:
-        if logout_button_type == 'name':
-            v = driver.find_element_by_name(logout_button)
-        elif logout_button_type == 'link':
-            v = driver.find_element_by_partial_link_text(logout_button)
-        elif logout_button_type == 'class':
-            v = driver.find_element_by_class_name(logout_button)
+        if verify_type == 'name':
+            v = driver.find_element_by_name(verify)
+        elif verify_type == 'link':
+            v = driver.find_element_by_partial_link_text(verify)
+        elif verify_type == 'class':
+            v = driver.find_element_by_class_name(verify)
         else:
-            mess = ', wrong type for option --logout'
+            mess = ', wrong type for option --verify'
             sys.exit(1)
     except:
         exit_status('CRITICAL: Unable to verify login' +  mess, 2)
@@ -220,6 +230,7 @@ def page_login_verify():
 
 
 def main():
+    timer()
     begin_login()
     test_errorpage()
     page_login_sso()
