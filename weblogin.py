@@ -97,7 +97,9 @@ if login_sso:
 # Make Firefox use headless mode and geckodriver.
 options = Options()
 #options.add_argument('-headless')
-driver = Firefox(executable_path='geckodriver', firefox_options=options)
+driver = Firefox(executable_path=\
+         'geckodriver',\
+         firefox_options=options)
 
 # Set timer for login attempt.
 start_timer = time.time()
